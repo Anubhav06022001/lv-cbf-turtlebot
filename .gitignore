@@ -1,0 +1,22 @@
+# Ignore large model weights and cache
+*.pt
+*.npy
+__pycache__/
+.vscode/
+
+# Explicitly allow CSVs
+!results/csv/*.csv
+
+
+# Datasets
+*.h5
+
+
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Experiment outputs
+results/
