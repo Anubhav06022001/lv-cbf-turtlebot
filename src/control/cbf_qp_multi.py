@@ -18,8 +18,8 @@ def cbf_qp_multi(u_ref, A_list, b_list):
     b_cbf = np.array(b_list)         
 
     # u_min, u_max = -2.0 * np.ones(n), 2.0 * np.ones(n)
-    u_min = np.array([0.0, -2.5, 0.0])  # Allows slowing to a full stop (0.0 m/s) and fast turning
-    u_max = np.array([2.5,  2.5, 0.0])  # Allows the robot to match your 2.5 m/s command
+    u_min = np.array([0, -2.75, 0.0])  
+    u_max = np.array([0.21, +2.75, 0.0])
 
     # Add slack column to CBF constraints
     slack_col = np.ones((len(b_cbf), 1))

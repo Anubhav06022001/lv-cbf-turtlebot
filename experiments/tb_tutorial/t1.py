@@ -57,6 +57,11 @@ glfw.set_cursor_pos_callback(window, mousekbd.mouse_move)
 glfw.set_mouse_button_callback(window, mousekbd.mouse_button)
 glfw.set_scroll_callback(window, mousekbd.scroll)
 
+# --- Robot Inset Camera Setup ---
+cam_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_CAMERA, 'wrist_camera')
+offscreen_cam = mj.MjvCamera()
+offscreen_cam.type = mj.mjtCamera.mjCAMERA_FIXED
+offscreen_cam.fixedcamid = cam_id
 #set the controller
 mj.set_mjcb_control(controller)
 
@@ -78,6 +83,12 @@ while not glfw.window_should_close(window):
     # Update scene and render
     mj.mjv_updateScene(model, data, opt, None, cam, mj.mjtCatBit.mjCAT_ALL.value, scene)
     mj.mjr_render(viewport, scene, context)
+
+    # 2. Top-right wrist camera inset render (320x240)
+    inset_w, inset_h = 320, 240
+    inset_vport = mj.MjrRect(viewport_width - inset_w, viewport_height - inset_h, inset_w, inset_h)
+    mj.mjv_updateScene(model, data, opt, None, offscreen_cam, mj.mjtCatBit.mjCAT_ALL.value, scene)
+    mj.mjr_render(inset_vport, scene, context)
 
     # swap OpenGL buffers (blocking call due to v-sync)
     glfw.swap_buffers(window)

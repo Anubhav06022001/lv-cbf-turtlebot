@@ -54,7 +54,7 @@ def controller(model, data):
                 v = 0.0 # Stop moving forward
                 w = 2.0 * np.sign(yaw_err) # Rotate in place
             else:
-                v = 0.22 # Max speed forward
+                v = 2.10 # Max speed forward
                 w = 2.5 * yaw_err # Minor steering corrections
 
     # Convert v and w to wheel velocities
@@ -65,7 +65,7 @@ def controller(model, data):
     data.ctrl[0] = np.clip(w_l, -6.67, 6.67)
     data.ctrl[1] = np.clip(w_r, -6.67, 6.67)
 
-    logger.log(data.time, v, w, data.ctrl[0], data.ctrl[1])
+    # logger.log(data.time, v, w, data.ctrl[0], data.ctrl[1])
 
     if int(data.time * 100) % 50 == 0:  
         print(f"Time: {data.time:.2f} | WP: {current_wp} | v: {v:.2f} | w: {w:.2f} | Left: {w_l:.2f} | Right: {w_r:.2f}")
@@ -140,4 +140,4 @@ while not glfw.window_should_close(window):
     glfw.poll_events()
 
 glfw.terminate()
-logger.close()
+# logger.close()

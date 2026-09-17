@@ -18,5 +18,3 @@ __pycache__/
 .venv/
 venv/
 
-# Experiment outputs
-results/

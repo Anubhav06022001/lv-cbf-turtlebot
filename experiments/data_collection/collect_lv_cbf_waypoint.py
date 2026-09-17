@@ -1,24 +1,19 @@
 import os
 import sys
-
-# Crucial: EGL headless backend MUST be set before mujoco imports
-os.environ["MUJOCO_GL"] = "egl"
-
-import mujoco
 import numpy as np
 import h5py
 from pathlib import Path
+
+# Crucial: EGL headless backend MUST be set before mujoco imports
+os.environ["MUJOCO_GL"] = "egl"
+import mujoco
 
 # Dynamically resolve root directory
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 XML_PATH = str(PROJECT_ROOT / "robotis_tb3" / "scene_turtlebot3_burger.xml")
-H5_PATH = str(PROJECT_ROOT / "experiments" / "data_collection" / "dataset_waypoint.h5")
-
-from src.lvcbf.vision_cbf_network import VisionBarrierNet
-from src.control.cbf_qp_multi import cbf_qp_multi 
-from src.utils.mouse_keyboard import MouseKeyboard
+H5_PATH = str(PROJECT_ROOT / "experiments" / "data_collection" / "dataset_waypoint_ghosts.h5")
 
 GOAL_POS = np.array([4.0, 0.0])
 EPISODES = 500
@@ -35,23 +30,25 @@ def quat2yaw(q):
 def get_mujoco_min_distance(model, data):
     min_dist = float('inf')
     robot_pos = data.qpos[:2]
+    # Check all 7 obstacles based on your XML
     for i in range(1, 8):
         geom_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle{i}")
         if geom_id != -1:
+            # If robot goes inside the ghost cylinder, this value naturally becomes negative!
             dist = np.linalg.norm(robot_pos - model.geom_pos[geom_id][:2]) - model.geom_size[geom_id][0] - ROBOT_RADIUS
             if dist < min_dist:
                 min_dist = dist
     return min_dist
 
 def compute_waypoint_control(pos, yaw):
-    """Directly drives toward the goal, ignoring obstacles."""
+    """Directly drives toward the goal using your specified controller."""
     direction = GOAL_POS - pos
     target_yaw = np.arctan2(direction[1], direction[0])
     yaw_err = np.arctan2(np.sin(target_yaw - yaw), np.cos(target_yaw - yaw))
     
-    # Increased speed from 0.25 to 0.8 m/s
-    v = max(0.0, 0.8 * np.cos(yaw_err))
-    w = 2.0 * yaw_err
+    # Matched exactly to your physical limits
+    v = 0.21 * max(0.0, np.cos(yaw_err))
+    w = 1.5 * yaw_err
     return v, w
 
 def main():
@@ -77,10 +74,11 @@ def main():
         total_transitions = d_ep.shape[0]
         start_ep = d_ep[-1] + 1 if total_transitions > 0 else 0
 
-    print("Starting Pure Waypoint Data Collection...")
+    print("Starting Negative-Mining Ghost Data Collection...")
     for ep in range(start_ep, EPISODES):
         mujoco.mj_resetData(model, data)
-        start_x, start_y = np.random.uniform(-1.5, 0.0), np.random.uniform(-2.5, 2.5)
+        # Randomize start positions to get broad coverage of the unsafe regions
+        start_x, start_y = np.random.uniform(0.0, 3.5), np.random.uniform(-1.5, 1.5)
         data.qpos[:3] = [start_x, start_y, 0.05]
         init_yaw = np.arctan2(GOAL_POS[1] - start_y, GOAL_POS[0] - start_x)
         data.qpos[3:7] = [np.cos(init_yaw / 2), 0, 0, np.sin(init_yaw / 2)] 
@@ -114,7 +112,7 @@ def main():
             d_rgb[idx], d_dep[idx], d_dist[idx] = rgb, depth_t, [min_dist]
             total_transitions += 1
             
-            if np.linalg.norm(GOAL_POS - pos_2d) < 0.2:
+            if np.linalg.norm(GOAL_POS - pos_2d) < 0.15:
                 break 
 
         if (ep + 1) % 10 == 0:

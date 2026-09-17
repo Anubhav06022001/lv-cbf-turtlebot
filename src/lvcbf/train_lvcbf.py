@@ -35,7 +35,7 @@ models_dir = BASE_DIR / "models"
 os.makedirs(models_dir, exist_ok=True)
 
 # Pointing to your newly collected dataset
-data_path = ROOT_DIR / "experiments" / "data_collection" / "dataset_apf.h5"
+data_path = ROOT_DIR / "experiments" / "data_collection" / "dataset_waypoint_ghosts.h5"
 
 # ==========================================
 # TRAINING SETUP
@@ -46,7 +46,7 @@ dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_worker
 B_net = VisionBarrierNet().to(DEVICE)
 optimizer = torch.optim.Adam(B_net.parameters(), lr=lr)
 
-checkpoint_path = models_dir / "tb3_lvcbf_apf.pt"
+checkpoint_path = models_dir / "tb3_lvcbf_waypoint_ghost.pt"
 start_epoch = load_checkpoint(B_net, optimizer, checkpoint_path, DEVICE)
 
 print(f"Dataset loaded. Total transitions: {len(dataset)}")
@@ -93,8 +93,8 @@ for epoch in range(epochs):
     if (epoch + 1) % 5 == 0:
         save_checkpoint(B_net, optimizer, epoch, checkpoint_path)
 
-torch.save(B_net.state_dict(), models_dir / "tb3_lvcbf_apf_final.pt")
-print(f"Saved Vision V-OCBF model to {models_dir / 'tb3_lvcbf_apf_final.pt'}")
+torch.save(B_net.state_dict(), models_dir / "tb3_lvcbf_waypoint_ghost_final.pt")
+print(f"Saved Vision V-OCBF model to {models_dir / 'tb3_lvcbf_waypoint_ghost_final.pt'}")
 
 
 
