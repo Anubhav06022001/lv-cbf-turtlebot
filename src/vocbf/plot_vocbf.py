@@ -51,7 +51,7 @@ def main():
                 yaw = np.arctan2(GOAL_POS[1] - py, GOAL_POS[0] - px)
                 
                 # Process State [x, y, yaw, v, w]
-                state_5d = np.array([px, py, yaw, 0.21, 0.0])
+                state_5d = np.array([px, py, yaw, 0.15, 0.0])
                 x_norm = (state_5d - x_mean) / x_std
                 x_torch = torch.tensor(x_norm, dtype=torch.float32, device=DEVICE).unsqueeze(0)
                 
@@ -87,9 +87,10 @@ def main():
     plt.tight_layout()
     
     # Save in the same directory as this script (src/vocbf)
-    plot_path = THIS_DIR / "vocbf_safety_map.png"
+    plot_path = THIS_DIR / "vocbf_safety_map@0.15m_per_s.png"
+    plt.show()
     plt.savefig(str(plot_path), dpi=300, bbox_inches='tight')
-    print(f"Success! Saved IEEE-ready plot to {plot_path}")
+    # print(f"Success! Saved IEEE-ready plot to {plot_path}")
 
 if __name__ == "__main__":
     main()

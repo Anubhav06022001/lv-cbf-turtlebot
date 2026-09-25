@@ -15,6 +15,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.vocbf.vocbf_network import BarrierNet
 from src.control.cbf_qp_multi import cbf_qp_multi 
 from src.utils.mouse_keyboard import MouseKeyboard 
+from src.utils.tb3_helpers import (
+    simend, WHEEL_RADIUS, TRACK_WIDTH, ROBOT_RADIUS, 
+    GOAL_POS, CYLINDER_COORDS, ALPHA, SAFETY_OFFSET,
+    quat2yaw, get_min_dist
+)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 xml_path = PROJECT_ROOT / "robotis_tb3" / "scene_turtlebot3_burger.xml"
@@ -23,26 +28,6 @@ MEAN_PATH = PROJECT_ROOT / "models" / "tb3_state_mean.npy"
 STD_PATH = PROJECT_ROOT / "models" / "tb3_state_std.npy"
 MODEL_PATH = PROJECT_ROOT / "models" / "tb3_vocbf.pt"
 
-simend = 150.0
-WHEEL_RADIUS = 0.033
-TRACK_WIDTH = 0.16
-ROBOT_RADIUS = 0.10
-GOAL_POS = np.array([4.0, 0.0])
-CYLINDER_COORDS = [(1.0, 0.5), (1.0, -0.5), (2.0, 0.0), (2.0, 1.0), (2.0, -1.0), (3.0, 0.5), (3.0, -0.5)]
-
-ALPHA = 4.0
-SAFETY_OFFSET = 0.10
-
-def quat2yaw(q):
-    w, x, y, z = q
-    return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
-
-def get_min_dist(pos_2d):
-    min_dist = float('inf')
-    for cx, cy in CYLINDER_COORDS:
-        dist = np.hypot(pos_2d[0] - cx, pos_2d[1] - cy) - 0.1 - ROBOT_RADIUS
-        if dist < min_dist: min_dist = dist
-    return min_dist
 
 # --- Initialize MuJoCo ---
 model = mj.MjModel.from_xml_path(str(xml_path))
@@ -88,6 +73,8 @@ is_recovering = False
 # recovery_spin = 0.0
 recovery_dir = 1.0
 
+locked_w_sign = 0.0
+
 while not glfw.window_should_close(window):
     # Step physics 
     for _ in range(10):
@@ -97,22 +84,22 @@ while not glfw.window_should_close(window):
         print("Simulation ended.")
         break
 
-    # --- 1. Extract State ---
+     # --- 1. Extract State ---
     pos_2d = data.qpos[:2]
     yaw = quat2yaw(data.qpos[3:7])
     v_forward = data.qvel[0]
     w_yaw = data.qvel[5] 
-    
+        
     state_5d = np.array([pos_2d[0], pos_2d[1], yaw, v_forward, w_yaw])
     l_val = get_min_dist(pos_2d)
 
-    # --- 2. Base Controller ---
+   # --- 2. Base Controller ---
     direction = GOAL_POS - pos_2d
     target_yaw = np.arctan2(direction[1], direction[0])
     yaw_err = np.arctan2(np.sin(target_yaw - yaw), np.cos(target_yaw - yaw))
     
-    v_des = 0.22 * max(0.0, np.cos(yaw_err))
-    w_des = 1.5 * yaw_err + 0.0
+    v_des = 0.15 * max(0.0, np.cos(yaw_err))
+    w_des = 1.5 * yaw_err
     u_des = np.array([v_des, w_des, 0.0]) 
 
     # --- 3. Safety Filter (State-Only) ---
@@ -128,7 +115,6 @@ while not glfw.window_should_close(window):
     grad_B_ctrl = np.array([L_g_B_v, L_g_B_w, 0.0])
 
     B_raw = B_val.item()
-    # 1. No safety offset needed because the learned boundary is already buffered
     B_calibrated = B_raw - SAFETY_OFFSET 
     
     A_list, b_list = [grad_B_ctrl], [-ALPHA * B_calibrated]
@@ -136,54 +122,26 @@ while not glfw.window_should_close(window):
     u_safe = cbf_qp_multi(u_des, A_list, b_list)
     v_safe, w_safe = u_safe[0], u_safe[1]
 
-   # --- 4. TRUE HYSTERESIS DODGING LOGIC ---
-    # if not is_recovering:
-    #     # TRIGGER: If we hit the brakes (v < 0.05) and are dangerously close (B < 0.05)
-    #     if v_safe < 0.05 and B_calibrated < 0.00:
-    #         is_recovering = True
-    #         # Lock in a spin direction based on where the goal is
-    #         recovery_spin = -1.0 * np.sign(yaw_err + 0.01)
-    # else:
-    #     # RELEASE: DO NOT stop spinning until we are comfortably far away (B > 0.15)!
-    #     if B_calibrated > 0.05:
-    #         is_recovering = False
-    #         recovery_spin = 0.0
-
-    # # If the recovery state is active, strictly override the QP solver
-    # if is_recovering:
-    #     v_safe = 0.0
-    #     w_safe = recovery_spin
-
-    # # Apply limits and send to hardware
-    # data.ctrl[0] = np.clip((v_safe - w_safe * TRACK_WIDTH / 2.0) / WHEEL_RADIUS, -6.67, 6.67)
-    # data.ctrl[1] = np.clip((v_safe + w_safe * TRACK_WIDTH / 2.0) / WHEEL_RADIUS, -6.67, 6.67)
-
-    # --- 4. SEMI-CIRCLE ARC DODGING LOGIC ---
-    if not is_recovering:
-        # TRIGGER: If the QP hits the brakes and we are unsafe
-        if v_safe < 0.05 and B_calibrated < 0.00:
-            is_recovering = True
-            
-            # Smart Direction: Use the CBF gradient to turn AWAY from the obstacle!
-            # L_g_B_w tells us which rotation direction geometrically increases safety.
-            if abs(L_g_B_w) > 0.01:
-                recovery_dir = np.sign(L_g_B_w)
+    # --- 4. YOUR ANTI-CHATTER FIX ---
+    if B_calibrated < 0.0:
+        # We are in the unsafe region. Lock the direction!
+        if locked_w_sign == 0.0:
+            if abs(w_safe) > 0.01:
+                locked_w_sign = np.sign(w_safe)
             else:
-                recovery_dir = np.sign(yaw_err + 0.01) 
+                locked_w_sign = np.sign(yaw_err + 0.01)
+        
+        # Take the mod (abs) of the QP's chaotic output and force the locked sign.
+        # Ensure it spins at least 0.8 rad/s to break static friction!
+        w_safe = locked_w_sign * max(abs(w_safe), 0.8)
     else:
-        # RELEASE: Do not stop the arc until we have cleared the obstacle (B > 0.10)
-        if B_calibrated > 0.10:
-            is_recovering = False
+        # Back in the safe region, release the lock.
+        locked_w_sign = 0.0
 
-    # Execute the Semi-Circle Override
-    if is_recovering:
-        # Enforce R = 0.15m curve (v = 0.15, w = 1.0)
-        v_safe = 0.15
-        w_safe = recovery_dir * 1.0
-
-    # Apply limits and send to hardware
+    # --- Apply limits directly to hardware ---
     data.ctrl[0] = np.clip((v_safe - w_safe * TRACK_WIDTH / 2.0) / WHEEL_RADIUS, -6.67, 6.67)
     data.ctrl[1] = np.clip((v_safe + w_safe * TRACK_WIDTH / 2.0) / WHEEL_RADIUS, -6.67, 6.67)
+
 
     if int(data.time * 100) % 50 == 0:
         print(f"B_raw: {B_raw:.4f} | l: {l_val:.4f} | u_des: [{u_des[0]:.2f}, {u_des[1]:.2f}] | u_safe: [{v_safe:.2f}, {w_safe:.2f}]")

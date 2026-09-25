@@ -24,8 +24,7 @@ xml_path = PROJECT_ROOT / "robotis_tb3" / "scene_turtlebot3_burger.xml"
 # Corrected Model & Normalization Paths using PROJECT_ROOT
 MEAN_PATH = PROJECT_ROOT / "src" / "lvcbf" / "models" / "tb3_x_mean.npy"
 STD_PATH = PROJECT_ROOT / "src" / "lvcbf" / "models" / "tb3_x_std.npy"
-# MODEL_PATH = PROJECT_ROOT / "models" / "tb3_lvcbf_apf.pt"
-MODEL_PATH = PROJECT_ROOT / "models" / "tb3_lvcbf.pt"
+MODEL_PATH = PROJECT_ROOT / "models" / "tb3_lvcbf_waypoint_ghost_final.pt"
 
 simend = 60.0
 WHEEL_RADIUS = 0.033
@@ -33,6 +32,7 @@ TRACK_WIDTH = 0.16
 ROBOT_RADIUS = 0.10
 GOAL_POS = np.array([4.0, 0.0])
 CYLINDER_COORDS = [(1.0, 0.5), (1.0, -0.5), (2.0, 0.0), (2.0, 1.0), (2.0, -1.0), (3.0, 0.5), (3.0, -0.5)]
+SAFETY_MARGIN = -0.0
 
 def quat2yaw(q):
     w, x, y, z = q
@@ -96,18 +96,18 @@ offscreen_cam = mj.MjvCamera()
 offscreen_cam.type = mj.mjtCamera.mjCAMERA_FIXED
 offscreen_cam.fixedcamid = cam_id
 
-alpha = 2
+alpha = 400000
 
 logger = ControlLogger()
 while not glfw.window_should_close(window):
     time_prev = data.time
 
-    # while data.time - time_prev < 1.0/60.0:
-    #     mj.mj_step(model, data)
+    while data.time - time_prev < 3.0/60.0:
+        mj.mj_step(model, data)
 
     # Step physics 10 times per control/render loop to speed up simulation
-    for _ in range(10):
-        mj.mj_step(model, data)
+    # for _ in range(10):
+    #     mj.mj_step(model, data)
 
     if data.time >= simend:
         break
@@ -140,7 +140,7 @@ while not glfw.window_should_close(window):
     direction = GOAL_POS - pos_2d
     target_yaw = np.arctan2(direction[1], direction[0])
     yaw_err = np.arctan2(np.sin(target_yaw - yaw), np.cos(target_yaw - yaw))
-    v_des = 2.5 * np.cos(yaw_err)
+    v_des = 0.21 * np.cos(yaw_err)
     w_des = 1.5 * yaw_err
     u_des = np.array([max(0.0, v_des), w_des, 0.0]) 
 
@@ -164,14 +164,14 @@ while not glfw.window_should_close(window):
     grad_B_ctrl = np.array([L_g_B_v, L_g_B_w, 0.0])
 
     B_raw = B_val.item()
-    B_calibrated = B_raw - 0.40
+    B_calibrated = B_raw - SAFETY_MARGIN
 
     # A_list, b_list = [grad_B_ctrl], [-alpha * B_val.item()]
     A_list, b_list = [grad_B_ctrl], [-alpha * B_calibrated]
     u_safe = cbf_qp_multi(u_des, A_list, b_list)
 
     v_safe, w_safe = u_safe[0], u_safe[1]
-    logger.log(data.time, v_safe, w_safe)
+    # logger.log(data.time, v_safe, w_safe, w_l, w_r)
 
     data.ctrl[0] = (v_safe - w_safe * TRACK_WIDTH / 2.0) / WHEEL_RADIUS
     data.ctrl[1] = (v_safe + w_safe * TRACK_WIDTH / 2.0) / WHEEL_RADIUS
@@ -189,9 +189,18 @@ while not glfw.window_should_close(window):
     mj.mjv_updateScene(model, data, opt, None, offscreen_cam, mj.mjtCatBit.mjCAT_ALL.value, scene)
     mj.mjr_render(inset_vport, scene, context)
 
+    # Render Inset Wrist View (Visual only, 320x240)
+    inset_w, inset_h = 320, 240
+    inset_vport = mj.MjrRect(viewport_width - inset_w, viewport_height - inset_h, inset_w, inset_h)
+    mj.mjv_updateScene(model, data, opt, None, offscreen_cam, mj.mjtCatBit.mjCAT_ALL.value, scene)
+    mj.mjr_render(inset_vport, scene, context)
+    glfw.swap_buffers(window)
+    glfw.poll_events()
+
+
     glfw.swap_buffers(window)
     glfw.poll_events()
 
 glfw.terminate()
-logger.close()
+# logger.close()
 

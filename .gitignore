@@ -18,3 +18,6 @@ __pycache__/
 .venv/
 venv/
 
+# Large experiment videos
+*.mp4
+experiments/hardware/*.mp4

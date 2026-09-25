@@ -46,7 +46,7 @@ dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_worker
 B_net = VisionBarrierNet().to(DEVICE)
 optimizer = torch.optim.Adam(B_net.parameters(), lr=lr)
 
-checkpoint_path = models_dir / "tb3_lvcbf_waypoint_ghost.pt"
+checkpoint_path = models_dir / "tb3_lvcbf_balanced_forest_2.pt"
 start_epoch = load_checkpoint(B_net, optimizer, checkpoint_path, DEVICE)
 
 print(f"Dataset loaded. Total transitions: {len(dataset)}")
@@ -74,11 +74,11 @@ for epoch in range(epochs):
 
         # Boundary constraints
         unsafe = (d < d_safe)
-        safe   = (d > 2.0) 
+        safe   = (d > 0.40) 
         
         anchor = 0
         if unsafe.any(): anchor += 0.05 * (B[unsafe] + 1).pow(2).mean()
-        if safe.any(): anchor += 0.01 * (B[safe] - 1).pow(2).mean()
+        if safe.any(): anchor += 0.10 * (B[safe] - 1).pow(2).mean()
 
         loss = value_loss + anchor
 
@@ -93,8 +93,8 @@ for epoch in range(epochs):
     if (epoch + 1) % 5 == 0:
         save_checkpoint(B_net, optimizer, epoch, checkpoint_path)
 
-torch.save(B_net.state_dict(), models_dir / "tb3_lvcbf_waypoint_ghost_final.pt")
-print(f"Saved Vision V-OCBF model to {models_dir / 'tb3_lvcbf_waypoint_ghost_final.pt'}")
+torch.save(B_net.state_dict(), models_dir / "tb3_lvcbf_balanced_forest_final_2.pt")
+print(f"Saved Vision V-OCBF model to {models_dir / 'tb3_lvcbf_balanced_forest_final_2.pt'}")
 
 
 
