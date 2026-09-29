@@ -19,7 +19,7 @@ from src.lvcbf.vision_cbf_network import VisionBarrierNet
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MEAN_PATH = PROJECT_ROOT / "models" / "tb3_state_mean.npy"
 STD_PATH = PROJECT_ROOT / "models" / "tb3_state_std.npy"
-MODEL_PATH = PROJECT_ROOT / "models" /"lvcbf" / "tb3_lvcbf_balanced_forest_final.pt"
+MODEL_PATH = PROJECT_ROOT / "models" /"lvcbf" / "tb3_lvcbf_balanced_forest_final_3.pt"
 XML_PATH = PROJECT_ROOT / "robotis_tb3" / "scene_turtlebot3_burger.xml"
 
 CYLINDER_RADIUS = 0.10
@@ -90,7 +90,7 @@ def main():
                 img_torch = torch.tensor(np.transpose(rgbd, (2, 0, 1)) / 255.0, dtype=torch.float32, device=DEVICE).unsqueeze(0)
 
                 # 3. Process State and Predict
-                state_5d = np.array([px, py, yaw, 0.15, 0.0])
+                state_5d = np.array([px, py, yaw, 0.21, 0.0])
                 x_norm = (state_5d - x_mean) / x_std
                 x_torch = torch.tensor(x_norm, dtype=torch.float32, device=DEVICE).unsqueeze(0)
                 
@@ -118,7 +118,7 @@ def main():
 
     cbar = fig.colorbar(contour, ax=ax)
     cbar.set_label('Learned CBF Value B(img, x)')
-    ax.set_title('Vision-Language-Action Safety Map (LV-CBF)')
+    ax.set_title('Visio-Action Safety Map (LV-CBF)')
     ax.set_xlabel('X Position [m]')
     ax.set_ylabel('Y Position [m]')
     ax.set_xlim(0, 4.5)
@@ -127,8 +127,8 @@ def main():
     ax.legend(loc='lower left')
 
     plt.tight_layout()
-    plot_path = THIS_DIR / "balanced_0.15_m_s.png"
-    # plt.show()
+    plot_path = THIS_DIR / "balanced3_0.21_m_s.png"
+    plt.show()
     plt.savefig(str(plot_path), dpi=300, bbox_inches='tight')
     print(f"Success! Saved IEEE-ready plot to {plot_path}")
 

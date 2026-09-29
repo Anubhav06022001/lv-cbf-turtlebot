@@ -18,7 +18,7 @@ from src.control.cbf_qp_multi import cbf_qp_multi
 from src.utils.mouse_keyboard import MouseKeyboard
 from src.utils.tb3_helpers import (
      WHEEL_RADIUS, TRACK_WIDTH, ROBOT_RADIUS, 
-    GOAL_POS, CYLINDER_COORDS, SAFETY_OFFSET, ALPHA,  LOOKAHEAD_DIST, quat2yaw, get_min_dist)
+    GOAL_POS, CYLINDER_COORDS, ALPHA, SAFETY_OFFSET, LOOKAHEAD_DIST, quat2yaw, get_min_dist)
 from src.utils.plot_utils import plot_2d_trajectory
 simend = 900.0
 
@@ -134,11 +134,10 @@ while not glfw.window_should_close(window):
     B_raw = B_val.item()
     B_calibrated = B_raw - SAFETY_OFFSET 
 
-    # GOAL MUTING: Force safety if we are within 0.45m of the goal to ignore visual artifacts
     if dist_to_goal < 0.45:
         B_calibrated = 1.0  
 
-    # --- 4. DYNAMIC LOOKAHEAD ---
+    # --- 4. DYNAMIC LOOKAHEAD & AMNESIA ---
     distances = np.linalg.norm(waypoints - pos_2d, axis=1)
     target_idx = np.argmin(distances)
     for i in range(target_idx, len(waypoints)):
@@ -146,17 +145,21 @@ while not glfw.window_should_close(window):
             target_idx = i
             break
             
-    # LOOK-PAST FIX: Shift waypoint forward if dodging
     if B_calibrated < 0.10:
         target_idx = min(len(waypoints) - 1, target_idx + 10)
         
     target_pos = waypoints[target_idx]
 
+    # FIX: WAYPOINT AMNESIA
+    # If the robot is in an emergency lock, override the target to point where it is dodging
+    if locked_w_sign != 0.0:
+        target_yaw = yaw + (locked_w_sign * 0.5)  # Point target 30 degrees in dodge direction
+    else:
+        direction = target_pos - pos_2d
+        target_yaw = np.arctan2(direction[1], direction[0])
+
     # --- 5. Base Controller ---
-    direction = target_pos - pos_2d
-    target_yaw = np.arctan2(direction[1], direction[0])
     yaw_err = np.arctan2(np.sin(target_yaw - yaw), np.cos(target_yaw - yaw))
-    
     v_des = 0.21 * max(0.0, np.cos(yaw_err))
     w_des = 1.5 * yaw_err
     u_des = np.array([v_des, w_des, 0.0]) 
@@ -171,10 +174,8 @@ while not glfw.window_should_close(window):
         if locked_w_sign == 0.0:
             locked_w_sign = np.sign(w_safe) if abs(w_safe) > 0.01 else np.sign(yaw_err + 0.01)
     elif B_calibrated > 0.25: 
-        # INCREASED release threshold: Wait until staring down a wide-open corridor
         locked_w_sign = 0.0
 
-    # FORCED MOMENTUM FIX: Do not let the robot stop moving forward while locked
     if locked_w_sign != 0.0:
         v_safe = 0.15 
         w_safe = locked_w_sign * 1.5
