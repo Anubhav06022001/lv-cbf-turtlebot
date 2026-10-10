@@ -92,11 +92,11 @@ evasion_target = None
 # ==========================================
 # SETUP CSV LOGGING
 # ==========================================
-csv_path = Path(__file__).resolve().parent / "lvcbf.csv"
+csv_path = Path(__file__).resolve().parent / "lvcbf3.csv"
 csv_file = open(csv_path, mode='w', newline='')
 csv_writer = csv.writer(csv_file)
 # Header row for the hardware script
-csv_writer.writerow(['x', 'y', 'yaw', 'v', 'w'])
+csv_writer.writerow(['time', 'x', 'y', 'yaw', 'v', 'w'])
 
 while not glfw.window_should_close(window):
     for _ in range(10):
@@ -168,7 +168,7 @@ while not glfw.window_should_close(window):
         tx = -dodge_dir * ry
         ty = dodge_dir * rx
         
-        R_safe = 0.23
+        R_safe = 0.24
         gamma = 2.4
         rad_mag = gamma * (R_safe - d)
         
@@ -212,7 +212,8 @@ while not glfw.window_should_close(window):
     # ==========================================
     # LOG TO CSV
     # ==========================================
-    csv_writer.writerow([pos_2d[0], pos_2d[1], yaw, v_safe, w_safe])
+    # csv_writer.writerow([pos_2d[0], pos_2d[1], yaw, v_safe, w_safe])
+    csv_writer.writerow([data.time, pos_2d[0], pos_2d[1], yaw, v_safe, w_safe])
 
     # --- Apply limits ---
     data.ctrl[0] = np.clip((v_safe - w_safe * TRACK_WIDTH / 2.0) / WHEEL_RADIUS, -6.67, 6.67)
