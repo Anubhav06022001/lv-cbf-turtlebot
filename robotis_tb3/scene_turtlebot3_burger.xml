@@ -20,21 +20,21 @@
       <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
       <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
 
-      <!-- <geom name="obstacle1" type="cylinder" pos="1 0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/>
+      <geom name="obstacle1" type="cylinder" pos="1 0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/>
       <geom name="obstacle2" type="cylinder" pos="1 -0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/>
       <geom name="obstacle3" type="cylinder" pos="2 0 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/>
       <geom name="obstacle4" type="cylinder" pos="2 1 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/>
       <geom name="obstacle5" type="cylinder" pos="2 -1 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/>
       <geom name="obstacle6" type="cylinder" pos="3 0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/>
-      <geom name="obstacle7" type="cylinder" pos="3 -0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/> -->
+      <geom name="obstacle7" type="cylinder" pos="3 -0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" contype="0" conaffinity="0"/>
 
-      <geom name="obstacle1" type="cylinder" pos="1 0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" />
+      <!-- <geom name="obstacle1" type="cylinder" pos="1 0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" />
       <geom name="obstacle2" type="cylinder" pos="1 -0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" />
       <geom name="obstacle3" type="cylinder" pos="2 0 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" />
       <geom name="obstacle4" type="cylinder" pos="2 1 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" />
       <geom name="obstacle5" type="cylinder" pos="2 -1 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" />
       <geom name="obstacle6" type="cylinder" pos="3 0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" />
-      <geom name="obstacle7" type="cylinder" pos="3 -0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" />
+      <geom name="obstacle7" type="cylinder" pos="3 -0.5 0" size="0.1 0.5" rgba="0.85 0.40 0.08 1" /> -->
 
       <geom name="goal_marker" type="cylinder" pos="4.0 0 0.001" size="0.2 0.01" rgba="0 1 0 0.5" contype="0" conaffinity="0"/>
   </worldbody>

@@ -34,6 +34,8 @@ BASE_DIR = Path(__file__).resolve().parent
 models_dir = BASE_DIR / "models"
 os.makedirs(models_dir, exist_ok=True)
 
+
+
 # Pointing to your newly collected dataset
 data_path = ROOT_DIR / "experiments" / "data_collection" / "dataset_waypoint_ghosts.h5"
 

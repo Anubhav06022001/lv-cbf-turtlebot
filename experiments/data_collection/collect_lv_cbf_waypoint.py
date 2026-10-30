@@ -6,18 +6,20 @@ from pathlib import Path
 
 # Crucial: EGL headless backend MUST be set before mujoco imports
 os.environ["MUJOCO_GL"] = "egl"
+# pyrefly: ignore[missing-import]
 import mujoco
+from mujoco.glfw import glfw
 
 # Dynamically resolve root directory
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 XML_PATH = str(PROJECT_ROOT / "robotis_tb3" / "scene_turtlebot3_burger.xml")
-H5_PATH = str(PROJECT_ROOT / "experiments" / "data_collection" / "dataset_waypoint_ghosts.h5")
+H5_PATH = str(PROJECT_ROOT / "experiments" / "data_collection" / "dataset_waypoint_ghosts_yaw_random.h5")
 
 GOAL_POS = np.array([4.0, 0.0])
 EPISODES = 500
-MAX_STEPS = 600
+MAX_STEPS = 2000
 
 WHEEL_RADIUS = 0.033
 TRACK_WIDTH = 0.16
@@ -54,7 +56,25 @@ def compute_waypoint_control(pos, yaw):
 def main():
     model = mujoco.MjModel.from_xml_path(str(XML_PATH))
     data = mujoco.MjData(model)
-    renderer = mujoco.Renderer(model, height=64, width=64)
+    # renderer = mujoco.Renderer(model, height=64, width=64)
+
+    # --- Initialize Invisible GLFW Renderer (Fallback for older MuJoCo) ---
+    if not glfw.init():
+        raise Exception("Could not initialize GLFW")
+
+    glfw.window_hint(glfw.VISIBLE, 0)
+    window = glfw.create_window(64, 64, "Invisible Data Collector", None, None)
+    glfw.make_context_current(window)
+
+    opt = mujoco.MjvOption()
+    scene = mujoco.MjvScene(model, maxgeom=10000)
+    context = mujoco.MjrContext(model, int(mujoco.mjtFontScale.mjFONTSCALE_150.value))
+    mujoco.mjv_defaultOption(opt)
+
+    offscreen_cam = mujoco.MjvCamera()
+    offscreen_cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
+    offscreen_cam.fixedcamid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, 'wrist_camera')
+    read_vport = mujoco.MjrRect(0, 0, 64, 64)
 
     os.makedirs(Path(H5_PATH).parent, exist_ok=True)
     file_exists = os.path.exists(H5_PATH)
@@ -78,9 +98,10 @@ def main():
     for ep in range(start_ep, EPISODES):
         mujoco.mj_resetData(model, data)
         # Randomize start positions to get broad coverage of the unsafe regions
-        start_x, start_y = np.random.uniform(0.0, 3.5), np.random.uniform(-1.5, 1.5)
+        start_x, start_y = np.random.uniform(-3.5, 0), np.random.uniform(-2.5, 2.5)
         data.qpos[:3] = [start_x, start_y, 0.05]
-        init_yaw = np.arctan2(GOAL_POS[1] - start_y, GOAL_POS[0] - start_x)
+        # init_yaw = np.arctan2(GOAL_POS[1] - start_y, GOAL_POS[0] - start_x)
+        init_yaw = np.random.uniform(-np.pi, np.pi)
         data.qpos[3:7] = [np.cos(init_yaw / 2), 0, 0, np.sin(init_yaw / 2)] 
         mujoco.mj_forward(model, data)
         
@@ -95,12 +116,27 @@ def main():
                                (v_des + w_des * TRACK_WIDTH / 2.0) / WHEEL_RADIUS], dtype=np.float32)
             data.ctrl[0], data.ctrl[1] = action[0], action[1]
             
-            renderer.update_scene(data, camera="wrist_camera")
-            rgb = np.transpose(renderer.render(), (2, 0, 1))
-            renderer.enable_depth_rendering()
-            renderer.update_scene(data, camera="wrist_camera")
-            depth_t = np.expand_dims(np.clip(renderer.render(), 0.0, 3.0) / 3.0, axis=0)
-            renderer.disable_depth_rendering()
+            # renderer.update_scene(data, camera="wrist_camera")
+            # rgb = np.transpose(renderer.render(), (2, 0, 1))
+            # renderer.enable_depth_rendering()
+            # renderer.update_scene(data, camera="wrist_camera")
+            # depth_t = np.expand_dims(np.clip(renderer.render(), 0.0, 3.0) / 3.0, axis=0)
+            # renderer.disable_depth_rendering()
+
+            # --- Render using GLFW ---
+            mujoco.mjv_updateScene(model, data, opt, None, offscreen_cam, mujoco.mjtCatBit.mjCAT_ALL.value, scene)
+            mujoco.mjr_render(read_vport, scene, context)
+
+            rgb_arr = np.zeros((64, 64, 3), dtype=np.uint8)
+            depth_arr = np.zeros((64, 64, 1), dtype=np.float32)
+            mujoco.mjr_readPixels(rgb_arr, depth_arr, read_vport, context)
+            
+            # Flip image correctly and reshape for h5
+            rgb_arr = np.flipud(rgb_arr)
+            depth_arr = np.flipud(depth_arr)
+            
+            rgb = np.transpose(rgb_arr, (2, 0, 1))
+            depth_t = np.transpose(np.clip(depth_arr, 0.0, 3.0) / 3.0, (2, 0, 1))
             
             for _ in range(10):
                 mujoco.mj_step(model, data)

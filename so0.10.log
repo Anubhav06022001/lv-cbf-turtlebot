@@ -1,0 +1,65 @@
+Loading Vision model from /home/anubhav/Documents/lv-cbf-turtle_bot/src/lvcbf/models/yawrand_x-3.5to0_v1/tb3_lvcbf_yawrand_x-3.5to0_v1_final.pt...
+
+========================================
+LV-CBF Benchmark: 50 episodes | chatter_breaker=False
+Model: tb3_lvcbf_yawrand_x-3.5to0_v1_final.pt
+========================================
+ep 0: COLLISION at [ 2.01 -0.2 ] | B_last=-0.02 | B_min(last 1s)=-0.14
+ep 1: COLLISION at [ 0.83 -0.39] | B_last=0.04 | B_min(last 1s)=-0.26
+ep 2: COLLISION at [1.84 0.12] | B_last=0.04 | B_min(last 1s)=-0.08
+ep 3: COLLISION at [0.81 0.43] | B_last=0.09 | B_min(last 1s)=-0.18
+ep 5: COLLISION at [ 1.82 -1.09] | B_last=0.14 | B_min(last 1s)=-0.18
+ep 6: COLLISION at [ 0.81 -0.44] | B_last=0.08 | B_min(last 1s)=-0.27
+ep 7: COLLISION at [1.91 1.18] | B_last=0.01 | B_min(last 1s)=-0.54
+ep 8: COLLISION at [ 0.94 -0.69] | B_last=-0.20 | B_min(last 1s)=-0.27
+ep 9: COLLISION at [ 1.92 -0.18] | B_last=0.10 | B_min(last 1s)=-0.49
+ep 10: COLLISION at [ 1.8  -0.02] | B_last=0.03 | B_min(last 1s)=-0.45
+ep 11: COLLISION at [2.12 0.16] | B_last=0.05 | B_min(last 1s)=-0.07
+ep 13: COLLISION at [ 0.8  -0.51] | B_last=0.03 | B_min(last 1s)=-0.22
+ep 14: COLLISION at [ 0.98 -0.7 ] | B_last=0.03 | B_min(last 1s)=-0.29
+ep 15: COLLISION at [1.83 1.1 ] | B_last=0.03 | B_min(last 1s)=-0.13
+ep 16: COLLISION at [ 2.02 -0.2 ] | B_last=-0.00 | B_min(last 1s)=-0.13
+ep 17: COLLISION at [ 2.09 -0.18] | B_last=-0.01 | B_min(last 1s)=-0.15
+ep 18: COLLISION at [1.8  1.04] | B_last=-0.02 | B_min(last 1s)=-0.08
+ep 19: COLLISION at [1.92 0.18] | B_last=0.05 | B_min(last 1s)=-0.12
+ep 20: COLLISION at [1.8  1.03] | B_last=-0.08 | B_min(last 1s)=-0.08
+ep 21: COLLISION at [ 0.93 -0.69] | B_last=0.19 | B_min(last 1s)=-0.25
+ep 22: COLLISION at [2.14 0.14] | B_last=-0.01 | B_min(last 1s)=-0.14
+ep 23: COLLISION at [1.81 1.06] | B_last=0.00 | B_min(last 1s)=-0.08
+[025/50] Safety: 12.0% | Reach: 4.0% | Timeouts: 2
+ep 26: COLLISION at [1.9  0.17] | B_last=0.06 | B_min(last 1s)=-0.45
+ep 27: COLLISION at [1.81 1.06] | B_last=-0.06 | B_min(last 1s)=-0.30
+ep 28: COLLISION at [0.82 0.41] | B_last=0.06 | B_min(last 1s)=-0.42
+ep 29: COLLISION at [1.9  0.17] | B_last=0.04 | B_min(last 1s)=-0.38
+ep 30: COLLISION at [ 2.84 -0.38] | B_last=-0.55 | B_min(last 1s)=-0.68
+ep 31: COLLISION at [0.81 0.55] | B_last=0.07 | B_min(last 1s)=-0.26
+ep 32: COLLISION at [ 2.87 -0.35] | B_last=-0.26 | B_min(last 1s)=-0.54
+ep 33: COLLISION at [ 0.82 -0.41] | B_last=0.00 | B_min(last 1s)=-0.07
+ep 35: COLLISION at [1.84 0.12] | B_last=-0.20 | B_min(last 1s)=-0.63
+ep 36: COLLISION at [0.82 0.41] | B_last=0.00 | B_min(last 1s)=-0.65
+ep 37: COLLISION at [ 2.05 -0.19] | B_last=-0.07 | B_min(last 1s)=-0.07
+ep 38: COLLISION at [1.9  0.17] | B_last=0.00 | B_min(last 1s)=-0.23
+ep 39: COLLISION at [ 0.91 -0.32] | B_last=0.02 | B_min(last 1s)=-0.36
+ep 40: COLLISION at [ 1.82 -1.09] | B_last=0.03 | B_min(last 1s)=-0.05
+ep 42: COLLISION at [ 1.82 -1.09] | B_last=0.01 | B_min(last 1s)=-0.02
+ep 43: COLLISION at [1.82 1.09] | B_last=0.13 | B_min(last 1s)=-0.17
+ep 44: COLLISION at [1.87 0.15] | B_last=-0.02 | B_min(last 1s)=-0.09
+ep 45: COLLISION at [0.8  0.49] | B_last=0.00 | B_min(last 1s)=-0.40
+ep 46: COLLISION at [ 1.8  -0.96] | B_last=0.05 | B_min(last 1s)=-0.08
+ep 47: COLLISION at [1.81 1.07] | B_last=0.12 | B_min(last 1s)=-0.12
+ep 48: COLLISION at [1.84 1.12] | B_last=0.03 | B_min(last 1s)=-0.31
+ep 49: COLLISION at [ 2.88 -0.34] | B_last=0.03 | B_min(last 1s)=-0.51
+[050/50] Safety: 12.0% | Reach: 4.0% | Timeouts: 4
+
+========================================
+FINAL LV-CBF BENCHMARK RESULTS
+========================================
+Model              : tb3_lvcbf_yawrand_x-3.5to0_v1_final.pt
+Chatter breaker    : False
+Episodes           : 50
+Safety Rate        : 12.00%
+Reach Rate         : 4.00%
+Timeouts (stalled) : 4
+Collisions         : 44
+========================================
+SAFETY_OFFSET=0.1 | ALPHA=40.0
